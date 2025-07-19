@@ -1,26 +1,42 @@
 {
-  "name": "unhcr-mcp-server",
-  "version": "1.0.0",
+  "name": "mcp-server-unhcr",
+  "version": "1.0.1",
   "description": "MCP server for accessing UNHCR refugee data and statistics API",
   "main": "index.js",
   "type": "module",
+  "bin": {
+    "unhcr-mcp-server": "./cli.js"
+  },
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "node index.js"
   },
   "keywords": [
     "mcp",
     "unhcr",
     "refugees",
     "api",
-    "humanitarian"
+    "humanitarian",
+    "modelcontextprotocol"
   ],
-  "author": "",
+  "author": "Shahzad Arain",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shahzadarain/unhcr-mcp-server.git"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
     "axios": "^1.6.0"
   },
-  "bin": {
-    "unhcr-mcp-server": "./index.js"
+  "files": [
+    "index.js",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

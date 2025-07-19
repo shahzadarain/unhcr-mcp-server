@@ -9,15 +9,15 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import axios from 'axios';
 
-const API_BASE_URL = 'https://data.unhcr.org/api';
-const API_VERSION = 'v2';
+// UNHCR API endpoints based on their documentation
+const API_BASE_URL = 'https://api.unhcr.org/population/v1';
 
 class UNHCRServer {
   constructor() {
     this.server = new Server(
       {
         name: 'unhcr-api',
-        version: '1.0.0',
+        version: '1.0.1',
       },
       {
         capabilities: {
@@ -29,11 +29,12 @@ class UNHCRServer {
     this.setupToolHandlers();
     
     this.axiosInstance = axios.create({
-      baseURL: `${API_BASE_URL}/${API_VERSION}`,
+      baseURL: API_BASE_URL,
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
       },
+      timeout: 30000,
     });
   }
 
@@ -46,26 +47,36 @@ class UNHCRServer {
           inputSchema: {
             type: 'object',
             properties: {
-              year: {
+              year_from: {
                 type: 'integer',
-                description: 'Year for the statistics (e.g., 2023)',
+                description: 'Start year for the statistics (e.g., 2022)',
+                default: 2022,
               },
-              country_code: {
+              year_to: {
+                type: 'integer',
+                description: 'End year for the statistics (e.g., 2023)',
+                default: 2023,
+              },
+              coo_iso: {
                 type: 'string',
-                description: 'ISO3 country code (e.g., "SYR" for Syria)',
+                description: 'Country of origin ISO3 code (e.g., "SYR" for Syria)',
+              },
+              coa_iso: {
+                type: 'string',
+                description: 'Country of asylum ISO3 code (e.g., "TUR" for Turkey)',
               },
               population_type: {
                 type: 'string',
-                description: 'Type of population: REF (refugees), ASY (asylum seekers), IDP (internally displaced), STA (stateless)',
-                enum: ['REF', 'ASY', 'IDP', 'STA', 'OOC', 'ALL'],
+                description: 'Type of population',
+                enum: ['REF', 'ASY', 'IDP', 'STA', 'OOC', 'VDA'],
               },
               limit: {
                 type: 'integer',
-                description: 'Number of results to return (default: 100, max: 1000)',
+                description: 'Number of results to return (default: 100, max: 10000)',
                 default: 100,
               },
             },
-            required: ['year'],
+            required: [],
           },
         },
         {
@@ -74,84 +85,93 @@ class UNHCRServer {
           inputSchema: {
             type: 'object',
             properties: {
-              year: {
+              year_from: {
                 type: 'integer',
-                description: 'Year for the demographics data',
+                description: 'Start year for demographics',
+                default: 2022,
               },
-              country_code: {
-                type: 'string',
-                description: 'ISO3 country code',
+              year_to: {
+                type: 'integer',
+                description: 'End year for demographics',
+                default: 2023,
               },
-              population_type: {
+              coo_iso: {
                 type: 'string',
-                description: 'Type of population',
-                enum: ['REF', 'ASY', 'IDP', 'STA', 'OOC'],
+                description: 'Country of origin ISO3 code',
+              },
+              coa_iso: {
+                type: 'string',
+                description: 'Country of asylum ISO3 code',
               },
             },
-            required: ['year'],
+            required: [],
           },
         },
         {
-          name: 'search_countries',
-          description: 'Search for countries and get their codes',
+          name: 'get_countries',
+          description: 'Get list of countries with their ISO codes',
           inputSchema: {
             type: 'object',
             properties: {
-              query: {
+              region: {
                 type: 'string',
-                description: 'Country name or partial name to search',
+                description: 'Filter by region (e.g., "Africa", "Asia", "Europe")',
               },
             },
-            required: ['query'],
+            required: [],
           },
         },
         {
-          name: 'get_time_series',
-          description: 'Get time series data for population statistics',
+          name: 'get_solutions',
+          description: 'Get data on durable solutions (resettlement, returns, etc.)',
           inputSchema: {
             type: 'object',
             properties: {
-              country_code: {
-                type: 'string',
-                description: 'ISO3 country code',
-              },
-              population_type: {
-                type: 'string',
-                description: 'Type of population',
-                enum: ['REF', 'ASY', 'IDP', 'STA', 'OOC'],
-              },
-              start_year: {
+              year_from: {
                 type: 'integer',
-                description: 'Start year for the time series',
+                description: 'Start year',
+                default: 2022,
               },
-              end_year: {
+              year_to: {
                 type: 'integer',
-                description: 'End year for the time series',
+                description: 'End year',
+                default: 2023,
+              },
+              coo_iso: {
+                type: 'string',
+                description: 'Country of origin ISO3 code',
+              },
+              solution_type: {
+                type: 'string',
+                description: 'Type of solution',
+                enum: ['RET', 'RST', 'NAT'],
               },
             },
-            required: ['start_year', 'end_year'],
+            required: [],
           },
         },
         {
-          name: 'get_asylum_decisions',
-          description: 'Get asylum application decisions data',
+          name: 'get_idps',
+          description: 'Get internally displaced persons (IDP) statistics',
           inputSchema: {
             type: 'object',
             properties: {
-              year: {
+              year_from: {
                 type: 'integer',
-                description: 'Year for the asylum decisions',
+                description: 'Start year',
+                default: 2022,
               },
-              country_code: {
-                type: 'string',
-                description: 'ISO3 country code of asylum country',
+              year_to: {
+                type: 'integer',
+                description: 'End year',
+                default: 2023,
               },
-              origin_country_code: {
+              coa_iso: {
                 type: 'string',
-                description: 'ISO3 country code of origin country',
+                description: 'Country ISO3 code',
               },
             },
-            required: ['year'],
+            required: [],
           },
         },
       ],
@@ -163,12 +183,12 @@ class UNHCRServer {
           return this.getPopulationStatistics(request.params.arguments);
         case 'get_demographics':
           return this.getDemographics(request.params.arguments);
-        case 'search_countries':
-          return this.searchCountries(request.params.arguments);
-        case 'get_time_series':
-          return this.getTimeSeries(request.params.arguments);
-        case 'get_asylum_decisions':
-          return this.getAsylumDecisions(request.params.arguments);
+        case 'get_countries':
+          return this.getCountries(request.params.arguments);
+        case 'get_solutions':
+          return this.getSolutions(request.params.arguments);
+        case 'get_idps':
+          return this.getIDPs(request.params.arguments);
         default:
           throw new McpError(
             ErrorCode.MethodNotFound,
@@ -180,21 +200,23 @@ class UNHCRServer {
 
   async getPopulationStatistics(args) {
     try {
-      const params = {
-        year: args.year,
-        limit: args.limit || 100,
-        page: 1,
-      };
-
-      if (args.country_code) {
-        params.coo_iso3 = args.country_code;
-      }
-
-      if (args.population_type && args.population_type !== 'ALL') {
-        params.population_type = args.population_type;
-      }
-
-      const response = await this.axiosInstance.get('/population', { params });
+      const params = new URLSearchParams();
+      
+      // Add parameters if provided
+      if (args.year_from) params.append('yearFrom', args.year_from);
+      if (args.year_to) params.append('yearTo', args.year_to);
+      if (args.coo_iso) params.append('coo', args.coo_iso);
+      if (args.coa_iso) params.append('coa', args.coa_iso);
+      if (args.population_type) params.append('populationType', args.population_type);
+      if (args.limit) params.append('limit', args.limit);
+      
+      // Default to showing data grouped by year
+      params.append('aggregate', 'year');
+      
+      const url = `/population?${params.toString()}`;
+      console.error(`Fetching from: ${API_BASE_URL}${url}`);
+      
+      const response = await this.axiosInstance.get(url);
       
       return {
         content: [
@@ -205,11 +227,12 @@ class UNHCRServer {
         ],
       };
     } catch (error) {
+      console.error('Error details:', error.response?.data || error.message);
       return {
         content: [
           {
             type: 'text',
-            text: `Error fetching population statistics: ${error.message}`,
+            text: `Error fetching population statistics: ${error.response?.data?.message || error.message}\nStatus: ${error.response?.status}\nAPI URL: ${API_BASE_URL}`,
           },
         ],
         isError: true,
@@ -219,21 +242,17 @@ class UNHCRServer {
 
   async getDemographics(args) {
     try {
-      const params = {
-        year: args.year,
-        limit: 100,
-        page: 1,
-      };
-
-      if (args.country_code) {
-        params.coo_iso3 = args.country_code;
-      }
-
-      if (args.population_type) {
-        params.population_type = args.population_type;
-      }
-
-      const response = await this.axiosInstance.get('/demographics', { params });
+      const params = new URLSearchParams();
+      
+      if (args.year_from) params.append('yearFrom', args.year_from);
+      if (args.year_to) params.append('yearTo', args.year_to);
+      if (args.coo_iso) params.append('coo', args.coo_iso);
+      if (args.coa_iso) params.append('coa', args.coa_iso);
+      
+      params.append('aggregate', 'age,sex');
+      
+      const url = `/demographics?${params.toString()}`;
+      const response = await this.axiosInstance.get(url);
       
       return {
         content: [
@@ -248,7 +267,7 @@ class UNHCRServer {
         content: [
           {
             type: 'text',
-            text: `Error fetching demographics: ${error.message}`,
+            text: `Error fetching demographics: ${error.response?.data?.message || error.message}`,
           },
         ],
         isError: true,
@@ -256,14 +275,14 @@ class UNHCRServer {
     }
   }
 
-  async searchCountries(args) {
+  async getCountries(args) {
     try {
-      const response = await this.axiosInstance.get('/countries', {
-        params: {
-          name: args.query,
-          limit: 20,
-        },
-      });
+      const params = new URLSearchParams();
+      
+      if (args.region) params.append('region', args.region);
+      
+      const url = `/countries?${params.toString()}`;
+      const response = await this.axiosInstance.get(url);
       
       return {
         content: [
@@ -278,7 +297,7 @@ class UNHCRServer {
         content: [
           {
             type: 'text',
-            text: `Error searching countries: ${error.message}`,
+            text: `Error fetching countries: ${error.response?.data?.message || error.message}`,
           },
         ],
         isError: true,
@@ -286,69 +305,17 @@ class UNHCRServer {
     }
   }
 
-  async getTimeSeries(args) {
+  async getSolutions(args) {
     try {
-      const results = [];
+      const params = new URLSearchParams();
       
-      for (let year = args.start_year; year <= args.end_year; year++) {
-        const params = {
-          year: year,
-          limit: 100,
-        };
-
-        if (args.country_code) {
-          params.coo_iso3 = args.country_code;
-        }
-
-        if (args.population_type) {
-          params.population_type = args.population_type;
-        }
-
-        const response = await this.axiosInstance.get('/population', { params });
-        results.push({
-          year: year,
-          data: response.data.items,
-        });
-      }
+      if (args.year_from) params.append('yearFrom', args.year_from);
+      if (args.year_to) params.append('yearTo', args.year_to);
+      if (args.coo_iso) params.append('coo', args.coo_iso);
+      if (args.solution_type) params.append('solutionType', args.solution_type);
       
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(results, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `Error fetching time series: ${error.message}`,
-          },
-        ],
-        isError: true,
-      };
-    }
-  }
-
-  async getAsylumDecisions(args) {
-    try {
-      const params = {
-        year: args.year,
-        limit: 100,
-        page: 1,
-      };
-
-      if (args.country_code) {
-        params.coa_iso3 = args.country_code;
-      }
-
-      if (args.origin_country_code) {
-        params.coo_iso3 = args.origin_country_code;
-      }
-
-      const response = await this.axiosInstance.get('/asylum-decisions', { params });
+      const url = `/solutions?${params.toString()}`;
+      const response = await this.axiosInstance.get(url);
       
       return {
         content: [
@@ -363,7 +330,41 @@ class UNHCRServer {
         content: [
           {
             type: 'text',
-            text: `Error fetching asylum decisions: ${error.message}`,
+            text: `Error fetching solutions data: ${error.response?.data?.message || error.message}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  }
+
+  async getIDPs(args) {
+    try {
+      const params = new URLSearchParams();
+      
+      if (args.year_from) params.append('yearFrom', args.year_from);
+      if (args.year_to) params.append('yearTo', args.year_to);
+      if (args.coa_iso) params.append('coa', args.coa_iso);
+      
+      params.append('populationType', 'IDP');
+      
+      const url = `/population?${params.toString()}`;
+      const response = await this.axiosInstance.get(url);
+      
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(response.data, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Error fetching IDP statistics: ${error.response?.data?.message || error.message}`,
           },
         ],
         isError: true,
@@ -378,5 +379,10 @@ class UNHCRServer {
   }
 }
 
-const server = new UNHCRServer();
-server.run().catch(console.error);
+// Auto-start server when script is run directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const server = new UNHCRServer();
+  server.run().catch(console.error);
+}
+
+export default UNHCRServer;
