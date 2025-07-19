@@ -1,0 +1,26 @@
+{
+  "name": "unhcr-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for accessing UNHCR refugee data and statistics API",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "mcp",
+    "unhcr",
+    "refugees",
+    "api",
+    "humanitarian"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "axios": "^1.6.0"
+  },
+  "bin": {
+    "unhcr-mcp-server": "./index.js"
+  }
+}
